@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Neo Clock — Pro Final (Developed by Souritro)</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{ --accent:#00e5ff; --accent-2:#00c4d6; --muted:#9aa7b2; --bg:#02040a; --glass:rgba(255,255,255,0.02); --popup-bg:rgba(2,6,16,0.95);}
+*{box-sizing:border-box} html,body{height:100%}
+body{
+  margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:radial-gradient(800px 400px at 10% 10%, #071226 0%, #02040a 30%, #000814 100%);color:#e6f7ff;display:flex;align-items:center;justify-content:center;padding:22px;
+}
+.app{width:1100px;max-width:98vw;border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));box-shadow:0 10px 60px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);display:grid;grid-template-columns:1fr 360px;gap:16px}
+.logo{width:58px;height:58px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#00121a;font-weight:700;font-family:Orbitron,monospace}
+.title{font-family:Orbitron,monospace;font-size:20px}.subtitle{color:var(--muted);font-size:12px}
+.main{padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02);min-height:300px;display:flex;flex-direction:column;gap:12px}
+.digital{font-family:Orbitron,monospace;font-size:48px;letter-spacing:2px;color:#f0ffff}
+.small-meta{color:var(--muted);font-size:13px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;cursor:pointer;color:#dffaff;font-weight:600}
+.btn-accent{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#00121a;box-shadow:0 8px 30px rgba(0,229,255,0.05)}
+.side{padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:12px;min-height:300px}
+.card-title{font-weight:700;font-size:14px}.list{display:flex;flex-direction:column;gap:8px;margin-top:6px}.chip{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,16,0.6);display:flex;align-items:center;justify-content:center;z-index:60}
+.modal{width:760px;max-width:95vw;border-radius:12px;background:var(--popup-bg);padding:16px;box-shadow:0 20px 80px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);color:#eafcff;position:relative}
+.modal h3{margin:0 0 8px 0;font-family:Orbitron,monospace}
+.close-x{position:absolute;right:12px;top:10px;background:transparent;border:0;font-size:20px;color:var(--muted);cursor:pointer}
+.input,select{background:transparent;border:1px solid rgba(255,255,255,0.05);color:inherit;padding:8px 10px;border-radius:8px;font-size:13px;width:100%}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px}.zone-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
+.ai-box{margin-top:8px;padding:10px;border-radius:8px;background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02);color:var(--muted)}
+.mic{position:fixed;right:22px;bottom:22px;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 16px 40px rgba(0,196,214,0.12);cursor:pointer;z-index:90;transition:transform 0.15s ease,box-shadow 0.15s ease}
+.mic.active{transform:scale(1.06);box-shadow:0 20px 80px rgba(0,196,214,0.26)}.mic svg{width:34px;height:34px;color:#00121a}
+.popup{position:fixed;right:24px;bottom:110px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#00121a;padding:12px 16px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.4);z-index:80;font-weight:700}
+@media (max-width:980px){.app{grid-template-columns:1fr}.side{order:2}}
+</style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Neo Clock">
+    <div class="main">
+      <div class="header" style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="logo">NC</div>
+          <div>
+            <div class="title">Neo Clock</div>
+            <div class="subtitle">Dark Tech • Developed by Souritro</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="small-meta">AI Assistant: <span id="ai-state">Idle</span></div>
+          <div class="small-meta">Theme: <span id="theme-name">Dark Tech</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div id="digital" class="digital">00:00:00</div>
+            <div id="date-line" class="small-meta">—</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+            <div class="controls">
+              <button class="btn btn-accent" id="open-alarm">Alarm</button>
+              <button class="btn" id="open-timer">Timer</button>
+              <button class="btn" id="open-stopwatch">Stopwatch</button>
+              <button class="btn" id="open-world">World Clock</button>
+              <button class="btn" id="toggle-format">12/24</button>
+              <select id="theme-switch" class="btn" style="padding:6px 10px;">
+                <option value="dark">Dark Tech</option>
+                <option value="purple">Cyber Purple</option>
+                <option value="red">Red Energy</option>
+              </select>
+            </div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+          <div style="background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)">
+            <div class="card-title">Active alarms</div>
+            <div id="alarm-list" class="list" style="margin-top:8px">No alarms — click Alarm</div>
+            <div class="ai-box" id="ai-box">Hello Souritro — Neo is ready. Tap the mic and say “set alarm for 7 am”.</div>
+          </div>
+          <div style="background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)">
+            <div class="card-title">Quick Actions</div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+              <button class="btn" data-cmd="timer 5m">5m</button>
+              <button class="btn" data-cmd="timer 15m">15m</button>
+              <button class="btn" data-cmd="timer 30m">30m</button>
+              <button class="btn" data-cmd="alarm 07:00">07:00</button>
+            </div>
+            <div style="margin-top:12px">
+              <div class="small-meta">Zones</div>
+              <div id="zones-side" class="list" style="margin-top:8px"></div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <input id="zone-input" class="input" placeholder="Add IANA e.g. Asia/Tokyo" />
+                <button class="btn" id="add-zone">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;font-size:13px;color:var(--muted)">Neo Clock — smart single-file clock. © Developed by Souritro</div>
+    </div>
+
+    <aside class="side" aria-label="Side controls">
+      <div>
+        <div class="card-title">World Clock</div>
+        <div id="zones-list" style="margin-top:8px"></div>
+      </div>
+      <div>
+        <div class="card-title">Stopwatch (quick)</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" id="sw-start-quick">Start</button>
+          <button class="btn" id="sw-stop-quick">Stop</button>
+          <button class="btn" id="sw-reset-quick">Reset</button>
+        </div>
+      </div>
+      <div>
+        <div class="card-title">Status</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <div class="chip" id="status-tz">TZ: —</div>
+          <div class="chip" id="status-alarms">Alarms: 0</div>
+          <div class="chip">v2.2 • Final</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- modal root -->
+  <div id="modal-root" aria-hidden="true"></div>
+
+  <!-- floating mic -->
+  <div class="mic" id="mic-btn" title="Tap to speak (English)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"></path>
+      <path d="M19 11v1a7 7 0 0 1-14 0v-1"></path>
+      <path d="M12 19v4"></path>
+    </svg>
+  </div>
+
+  <div id="toast-root" style="position:fixed;right:24px;bottom:110px;z-index:90"></div>
+
+<script>
+/* ================== State & persistence ================== */
+const STORAGE = 'neo_clock_final_';
+const state = {
+  is24: JSON.parse(localStorage.getItem(STORAGE + 'is24') || 'false'),
+  theme: localStorage.getItem(STORAGE + 'theme') || 'dark',
+  alarms: JSON.parse(localStorage.getItem(STORAGE + 'alarms') || '[]'),
+  zones: JSON.parse(localStorage.getItem(STORAGE + 'zones') || '["Asia/Kolkata","Europe/London","America/New_York","Asia/Tokyo"]'),
+  stopwatch: JSON.parse(localStorage.getItem(STORAGE + 'stopwatch') || JSON.stringify({running:false,start:0,elapsed:0,laps:[]})),
+  timer: null,
+  ringtones: JSON.parse(localStorage.getItem(STORAGE + 'ringtones') || '{}') // { key: { name, dataUrl } }
+};
+function saveAll(){ localStorage.setItem(STORAGE + 'is24', JSON.stringify(state.is24)); localStorage.setItem(STORAGE + 'theme', state.theme); localStorage.setItem(STORAGE + 'alarms', JSON.stringify(state.alarms)); localStorage.setItem(STORAGE + 'zones', JSON.stringify(state.zones)); localStorage.setItem(STORAGE + 'stopwatch', JSON.stringify(state.stopwatch)); localStorage.setItem(STORAGE + 'ringtones', JSON.stringify(state.ringtones)); }
+
+/* ================== single shared instances ================== */
+let audioCtx = null;
+let recognition = null;
+const synth = window.speechSynthesis;
+let selectedVoice = null;
+const modalRoot = document.getElementById('modal-root');
+const toastRoot = document.getElementById('toast-root');
+const micBtn = document.getElementById('mic-btn');
+const aiBox = document.getElementById('ai-box');
+const aiState = document.getElementById('ai-state');
+
+/* ================== utils ================== */
+function toast(text, ms = 3000){
+  const el = document.createElement('div'); el.className = 'popup'; el.textContent = text; toastRoot.appendChild(el);
+  setTimeout(()=> el.style.opacity = '1', 50);
+  setTimeout(()=> { el.style.transition='200ms'; el.style.opacity = '0'; setTimeout(()=> toastRoot.removeChild(el), 220); }, ms);
+}
+function ensureAudioCtx(){ if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function pickFemaleVoice(){ const vs = synth.getVoices(); if(!vs || !vs.length) return null; let v = vs.find(x => /female/i.test(x.name) && /en/i.test(x.lang)); if(!v) v = vs.find(x => /female/i.test(x.name)); if(!v) v = vs.find(x => /en/i.test(x.lang)); return v || vs[0]; }
+function loadVoices(){ const v = synth.getVoices(); if(v && v.length) selectedVoice = pickFemaleVoice(); else window.speechSynthesis.onvoiceschanged = () => selectedVoice = pickFemaleVoice(); }
+loadVoices();
+
+/* ================== TTS ================== */
+function speak(text){
+  if(!synth) return;
+  const u = new SpeechSynthesisUtterance(String(text));
+  if(selectedVoice) u.voice = selectedVoice;
+  u.lang = 'en-US'; u.pitch = 1.1; u.rate = 1;
+  synth.cancel(); synth.speak(u);
+  aiBox.textContent = text; aiState.textContent = 'Speaking';
+  u.onend = () => aiState.textContent = 'Idle';
+}
+
+/* ================== program tones ================== */
+function playProgramTone(type='beep'){
+  try {
+    const ctx = ensureAudioCtx();
+    if(type === 'beep'){ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='square'; o.frequency.setValueAtTime(880,ctx.currentTime); o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.12,ctx.currentTime+0.02); o.start(); setTimeout(()=>o.stop(),1400); }
+    else if(type === 'chime'){ const freqs=[660,880,1320]; freqs.forEach((f,i)=>{ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(f, ctx.currentTime + i*0.12); o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.001, ctx.currentTime + i*0.12); g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + i*0.12 + 0.02); o.start(ctx.currentTime + i*0.12); setTimeout(()=>o.stop(),2600); }); }
+    else if(type === 'bell'){ const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.setValueAtTime(1200, ctx.currentTime); o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime+0.01); o.start(); setTimeout(()=>o.stop(),3500); }
+  } catch(e){ console.warn(e); }
+}
+
+/* ================== ringtone playback (supports stored dataURL) ================== */
+function playRingtone(alarm){
+  try{
+    if(alarm && alarm.customKey && state.ringtones[alarm.customKey]){ const url = state.ringtones[alarm.customKey].dataUrl; const a = new Audio(url); a.play().catch(()=> playProgramTone(alarm.tone || 'beep')); }
+    else playProgramTone(alarm ? alarm.tone : 'beep');
+  } catch(e){ playProgramTone('beep'); }
+}
+
+/* ================== Clock tick (single stable interval) ================== */
+function niceTime(d, showSeconds=true, tz){
+  const opts = { hour:'2-digit', minute:'2-digit', second: showSeconds ? '2-digit' : undefined, hour12: !state.is24 };
+  if(tz) opts.timeZone = tz;
+  return new Intl.DateTimeFormat([], opts).format(d);
+}
+function tickOnce(){
+  const now = new Date();
+  document.getElementById('digital').textContent = niceTime(now, true);
+  document.getElementById('date-line').textContent = now.toLocaleString();
+  document.getElementById('status-tz').textContent = 'TZ: ' + (Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local');
+  document.getElementById('status-alarms').textContent = 'Alarms: ' + state.alarms.length;
+  checkAlarms(now);
+}
+let mainTick = setInterval(tickOnce, 500); tickOnce();
+
+/* ================== world zones (single interval) ================== */
+function updateWorldOnce(){
+  const side = document.getElementById('zones-list'); const side2 = document.getElementById('zones-side');
+  side.innerHTML = ''; side2.innerHTML = '';
+  state.zones.forEach((z,i) => {
+    try{
+      const t = new Date().toLocaleTimeString([], { timeZone: z, hour12: !state.is24 });
+      const node = document.createElement('div'); node.className = 'zone-item';
+      node.innerHTML = `<div><strong>${z}</strong><div class="small-meta">${t}</div></div><div><button class="btn" data-i="${i}" data-act="rm-zone">Remove</button></div>`;
+      side.appendChild(node);
+      const s = document.createElement('div'); s.className='zone-item';
+      s.innerHTML = `<div><strong>${z.split('/').pop()}</strong><div class="small-meta">${t}</div></div>`;
+      side2.appendChild(s);
+    }catch(e){}
+  });
+}
+let worldTick = setInterval(updateWorldOnce, 1000);
+updateWorldOnce();
+
+/* ================== Modal system (works reliably and close button fixed) ================== */
+function openModal(kind, data = {}){
+  // clear existing modal
+  modalRoot.innerHTML = ''; modalRoot.setAttribute('aria-hidden','false');
+  const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop';
+  const m = document.createElement('div'); m.className = 'modal';
+  backdrop.appendChild(m);
+
+  // close function
+  function closeModal(){ modalRoot.innerHTML = ''; modalRoot.setAttribute('aria-hidden','true'); }
+
+  // add close button and ensure its click is bound directly (fixes previous bug)
+  const closeBtn = document.createElement('button'); closeBtn.className = 'close-x'; closeBtn.innerHTML = '&times;';
+  closeBtn.addEventListener('click', closeModal);
+  m.appendChild(closeBtn);
+
+  // alarm modal content (with file upload)
+  if(kind === 'alarm'){
+    m.insertAdjacentHTML('beforeend', `
+      <h3>Alarms — Add / Manage</h3>
+      <div class="row"><input id="m-alarm-time" class="input" type="time" /><input id="m-alarm-label" class="input" placeholder="Label (optional)" /></div>
+      <div class="row"><select id="m-alarm-tone" class="input"><option value="beep">Beep</option><option value="chime">Chime</option><option value="bell">Bell</option></select></div>
+      <div class="row"><label style="color:var(--muted);font-size:13px">Upload ringtone:</label><input id="m-alarm-file" type="file" accept="audio/*" /></div>
+      <div style="margin-top:10px" id="m-alarm-list"></div>
+      <div style="margin-top:12px" class="row"><button class="btn" id="m-alarm-close">Close</button><button class="btn btn-accent" id="m-alarm-add">Add Alarm</button></div>
+    `);
+    modalRoot.appendChild(backdrop);
+
+    const list = m.querySelector('#m-alarm-list'); list.innerHTML = '';
+    state.alarms.forEach((a,i) => {
+      const item = document.createElement('div'); item.className='zone-item';
+      item.innerHTML = `<div><strong>${a.label||'Alarm'}</strong><div class="small-meta">${a.time} · ${a.tone||'tone'}${a.customKey?' · custom':''}${a.triggered?' · triggered':''}</div></div>
+        <div style="display:flex;gap:6px"><button class="btn" data-i="${i}" data-act="test">Test</button><button class="btn" data-i="${i}" data-act="del">Delete</button></div>`;
+      list.appendChild(item);
+    });
+
+    // Add alarm click
+    m.querySelector('#m-alarm-add').addEventListener('click', () => {
+      const t = m.querySelector('#m-alarm-time').value;
+      const lab = (m.querySelector('#m-alarm-label').value || suggestAlarmLabel()).trim();
+      const tone = m.querySelector('#m-alarm-tone').value;
+      const fileInput = m.querySelector('#m-alarm-file');
+      if(!t) return alert('Pick a time (HH:MM)');
+      // if file uploaded, read and store permanently
+      if(fileInput.files && fileInput.files[0]){
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const key = 'rt_' + Date.now().toString(36);
+          state.ringtones[key] = { name: file.name, dataUrl: ev.target.result };
+          state.alarms.push({ id: Date.now().toString(36), time: t, label: lab, tone, customKey: key, triggered:false });
+          saveAll(); renderAlarms(); toast('Alarm added with custom ringtone'); speak('Alarm set for ' + t + ' with custom ringtone'); closeModal();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        state.alarms.push({ id: Date.now().toString(36), time: t, label: lab, tone, customKey: null, triggered:false });
+        saveAll(); renderAlarms(); toast('Alarm added'); speak('Alarm set for ' + t); closeModal();
+      }
+    });
+
+    m.querySelector('#m-alarm-close').addEventListener('click', () => closeModal());
+
+    // event delegation for test/delete
+    list.addEventListener('click', (ev) => {
+      const act = ev.target.dataset.act; const idx = ev.target.dataset.i;
+      if(act === 'test'){ playRingtone(state.alarms[idx]); }
+      if(act === 'del'){ state.alarms.splice(Number(idx),1); saveAll(); renderAlarms(); openModal('alarm'); }
+    });
+
+    return;
+  }
+
+  // alarm-play modal when an alarm fires
+  if(kind === 'alarm-play'){
+    const alarm = data.alarm || {};
+    m.insertAdjacentHTML('beforeend', `<h3>Alarm — ${alarm.label || 'Alarm'}</h3><div class="small-meta">${alarm.time}</div>
+      <div style="margin-top:12px"><button class="btn btn-accent" id="snooze">Snooze 5m</button><button class="btn" id="dismiss">Dismiss</button></div>`);
+    modalRoot.appendChild(backdrop);
+    m.querySelector('#snooze').addEventListener('click', () => {
+      const d = new Date(); d.setMinutes(d.getMinutes() + 5); const hh = d.toTimeString().slice(0,5);
+      state.alarms.push({ id: Date.now().toString(36), time: hh, label: 'Snooze', tone: alarm.tone || 'beep', customKey: alarm.customKey || null, triggered:false });
+      saveAll(); renderAlarms(); toast('Snoozed 5 minutes'); speak('Snoozed for five minutes'); closeModal();
+    });
+    m.querySelector('#dismiss').addEventListener('click', () => closeModal());
+    return;
+  }
+
+  // timer modal
+  if(kind === 'timer'){
+    m.insertAdjacentHTML('beforeend', `
+      <h3>Timer — Custom H:M:S</h3>
+      <div class="row"><input id="m-th" class="input" placeholder="HH" type="number" min="0" /> <input id="m-tm" class="input" placeholder="MM" type="number" min="0" max="59" /> <input id="m-ts" class="input" placeholder="SS" type="number" min="0" max="59" /></div>
+      <div class="row"><button class="btn" data-preset="300">5m</button><button class="btn" data-preset="900">15m</button><button class="btn" data-preset="1800">30m</button><button class="btn" data-preset="3600">1h</button></div>
+      <div id="m-timer-display" style="font-family:Orbitron,monospace;font-size:20px;margin-top:10px">00:00:00</div>
+      <div style="margin-top:12px" class="row"><button class="btn" id="m-timer-cancel">Close</button><button class="btn btn-accent" id="m-timer-start">Start Timer</button></div>
+    `);
+    modalRoot.appendChild(backdrop);
+
+    let seconds = 0, intv = null;
+    const display = m.querySelector('#m-timer-display');
+    const render = ()=> display.textContent = new Date(seconds*1000).toISOString().substr(11,8);
+    m.querySelectorAll('[data-preset]').forEach(b=> b.addEventListener('click', ()=>{ seconds = Number(b.dataset.preset); render(); }));
+
+    m.querySelector('#m-timer-start').addEventListener('click', ()=> {
+      const h = Number(m.querySelector('#m-th').value || 0), mm = Number(m.querySelector('#m-tm').value || 0), s = Number(m.querySelector('#m-ts').value || 0);
+      seconds = h*3600 + mm*60 + s; if(seconds <= 0) return alert('Set duration');
+      if(state.timer && state.timer.intv) clearInterval(state.timer.intv);
+      const end = Date.now() + seconds*1000; state.timer = { end };
+      state.timer.intv = setInterval(()=> {
+        const rem = Math.ceil((end - Date.now())/1000);
+        if(rem <= 0){ clearInterval(state.timer.intv); delete state.timer; playProgramTone('bell'); toast('Timer finished'); speak('Timer finished'); openModal('timer-done'); }
+        else display.textContent = new Date(rem*1000).toISOString().substr(11,8);
+      }, 300);
+      toast('Timer started'); speak('Timer started for ' + formatDuration(seconds)); closeModal();
+    });
+    m.querySelector('#m-timer-cancel').addEventListener('click', () => closeModal());
+    return;
+  }
+
+  // timer-done modal
+  if(kind === 'timer-done'){
+    m.insertAdjacentHTML('beforeend', `<h3>Timer Done</h3><div class="small-meta">Timer finished.</div><div style="margin-top:10px"><button class="btn" id="td-close">Close</button><button class="btn btn-accent" id="td-snooze">Snooze 1m</button></div>`);
+    modalRoot.appendChild(backdrop);
+    m.querySelector('#td-close').addEventListener('click', ()=> closeModal());
+    m.querySelector('#td-snooze').addEventListener('click', ()=> {
+      const d = new Date(); d.setMinutes(d.getMinutes() + 1);
+      state.alarms.push({ id: Date.now().toString(36), time: d.toTimeString().slice(0,5), label: 'Timer Snooze', tone: 'chime', customKey: null, triggered:false });
+      saveAll(); renderAlarms(); speak('Snoozed for one minute'); toast('Snoozed 1 minute'); closeModal();
+    });
+    return;
+  }
+
+  // stopwatch modal
+  if(kind === 'stopwatch'){
+    m.insertAdjacentHTML('beforeend', `<h3>Stopwatch</h3><div id="sw-display" style="font-family:Orbitron,monospace;font-size:22px">00:00:00</div>
+      <div class="row"><button class="btn btn-accent" id="sw-start">Start</button><button class="btn" id="sw-stop">Stop</button><button class="btn" id="sw-lap">Lap</button><button class="btn" id="sw-reset">Reset</button></div><div id="sw-laps" style="margin-top:8px;max-height:220px;overflow:auto"></div>`);
+    modalRoot.appendChild(backdrop);
+
+    let sw = state.stopwatch; const dEl = m.querySelector('#sw-display'), laps = m.querySelector('#sw-laps');
+    function renderSw(){ const ms = sw.elapsed + (sw.running ? (Date.now() - sw.start) : 0); const hh = Math.floor(ms/3600000).toString().padStart(2,'0'); const mm = Math.floor(ms/60000%60).toString().padStart(2,'0'); const ss = Math.floor(ms/1000%60).toString().padStart(2,'0'); dEl.textContent = `${hh}:${mm}:${ss}`; laps.innerHTML=''; sw.laps.forEach((l,i)=>{ const li=document.createElement('div'); li.className='zone-item'; li.innerHTML = `<div>Lap ${i+1}</div><div class="small-meta">${formatMs(l)}</div>`; laps.appendChild(li); }); }
+    let interval = setInterval(renderSw, 200);
+
+    m.querySelector('#sw-start').addEventListener('click', ()=>{ if(sw.running) return; sw.running=true; sw.start = Date.now(); state.stopwatch = sw; saveAll(); speak('Stopwatch started'); });
+    m.querySelector('#sw-stop').addEventListener('click', ()=>{ if(!sw.running) return; sw.elapsed += Date.now() - sw.start; sw.running=false; state.stopwatch = sw; saveAll(); speak('Stopwatch stopped'); });
+    m.querySelector('#sw-lap').addEventListener('click', ()=>{ const ms = sw.elapsed + (sw.running ? (Date.now() - sw.start) : 0); sw.laps.unshift(ms); state.stopwatch = sw; saveAll(); speak('Lap recorded'); });
+    m.querySelector('#sw-reset').addEventListener('click', ()=>{ sw = { running:false,start:0,elapsed:0,laps:[] }; state.stopwatch = sw; saveAll(); renderSw(); speak('Stopwatch reset'); });
+
+    return;
+  }
+
+  // world modal
+  if(kind === 'world'){
+    m.insertAdjacentHTML('beforeend', `<h3>World Clock</h3><div class="small-meta">Add IANA timezone (e.g. Asia/Tokyo)</div><div class="row"><input id="w-tz" class="input" placeholder="IANA e.g. Asia/Tokyo" /></div><div id="w-list" style="margin-top:8px"></div><div style="margin-top:10px" class="row"><button class="btn" id="w-close">Close</button><button class="btn btn-accent" id="w-add">Add Zone</button></div>`);
+    modalRoot.appendChild(backdrop);
+
+    const list = m.querySelector('#w-list');
+    function render(){ list.innerHTML = ''; state.zones.forEach((z,i)=>{ try{ const t = new Date().toLocaleTimeString([], { timeZone: z, hour12: !state.is24 }); const node=document.createElement('div'); node.className='zone-item'; node.innerHTML = `<div><strong>${z}</strong><div class="small-meta">${t}</div></div><div><button class="btn" data-i="${i}" data-act="rm-zone">Remove</button></div>`; list.appendChild(node);}catch(e){} }); }
+    render();
+
+    m.querySelector('#w-add').addEventListener('click', ()=>{ const tz = m.querySelector('#w-tz').value.trim(); if(!tz) return alert('Enter timezone'); if(!state.zones.includes(tz)){ state.zones.push(tz); saveAll(); updateWorldOnce(); render(); toast('Zone added'); speak('Zone added ' + tz.split('/').pop()); } else toast('Zone exists'); m.querySelector('#w-tz').value = ''; });
+    m.addEventListener('click', (e)=>{ if(e.target.dataset.act === 'rm-zone'){ state.zones.splice(Number(e.target.dataset.i), 1); saveAll(); updateWorldOnce(); render(); }});
+    m.querySelector('#w-close').addEventListener('click', () => closeModal());
+    return;
+  }
+
+  modalRoot.appendChild(backdrop);
+  backdrop.addEventListener('click', (ev)=>{ if(ev.target === backdrop) closeModal(); });
+
+  function closeModal(){ modalRoot.innerHTML = ''; modalRoot.setAttribute('aria-hidden','true'); }
+}
+
+/* ================== render alarms list (side) ================== */
+function renderAlarms(){
+  const el = document.getElementById('alarm-list'); el.innerHTML = '';
+  if(!state.alarms.length){ el.innerHTML = '<div class="small-meta">No alarms</div>'; return; }
+  state.alarms.forEach((a,i)=>{ const node = document.createElement('div'); node.className='zone-item'; node.innerHTML = `<div><strong>${a.label||'Alarm'}</strong><div class="small-meta">${a.time} · ${a.tone||'tone'}${a.customKey?' · custom':''}${a.triggered?' · triggered':''}</div></div><div style="display:flex;gap:6px"><button class="btn" data-i="${i}" data-act="test">Test</button><button class="btn" data-i="${i}" data-act="del">Delete</button></div>`; el.appendChild(node); });
+}
+renderAlarms();
+
+/* ================== alarm check (single loop) ================== */
+function checkAlarms(now){
+  const cur = now.toTimeString().slice(0,5);
+  for(let i=0;i<state.alarms.length;i++){
+    const a = state.alarms[i];
+    if(!a.triggered && a.time === cur){
+      a.triggered = true; saveAll(); renderAlarms();
+      playRingtone(a);
+      openModal('alarm-play', { alarm: a });
+      toast('Alarm: ' + (a.label || 'Alarm'));
+      speak((a.label || 'Alarm') + ' at ' + a.time);
+    }
+  }
+}
+
+/* ================== quick actions & side buttons ================== */
+document.querySelectorAll('[data-cmd]').forEach(b=> b.addEventListener('click', ()=> handleQuick(b.dataset.cmd)));
+document.getElementById('add-zone').addEventListener('click', ()=> {
+  const tz = document.getElementById('zone-input').value.trim(); if(!tz) return alert('Enter IANA timezone');
+  if(!state.zones.includes(tz)){ state.zones.push(tz); saveAll(); updateWorldOnce(); toast('Added ' + tz); speak('Zone added ' + tz.split('/').pop()); } else toast('Zone exists');
+  document.getElementById('zone-input').value = '';
+});
+document.getElementById('open-alarm').addEventListener('click', ()=> openModal('alarm'));
+document.getElementById('open-timer').addEventListener('click', ()=> openModal('timer'));
+document.getElementById('open-stopwatch').addEventListener('click', ()=> openModal('stopwatch'));
+document.getElementById('open-world').addEventListener('click', ()=> openModal('world'));
+document.getElementById('toggle-format').addEventListener('click', ()=> { state.is24 = !state.is24; saveAll(); tickOnce(); updateWorldOnce(); speak(state.is24 ? 'Switched to 24 hour format' : 'Switched to 12 hour format'); });
+
+/* ================== event delegation for side test/delete & zone remove ================== */
+document.body.addEventListener('click', (e) => {
+  if(e.target.dataset.act === 'test' && e.target.dataset.i !== undefined){ playRingtone(state.alarms[Number(e.target.dataset.i)]); }
+  if(e.target.dataset.act === 'del' && e.target.dataset.i !== undefined){ state.alarms.splice(Number(e.target.dataset.i),1); saveAll(); renderAlarms(); toast('Alarm deleted'); speak('Alarm deleted'); }
+  if(e.target.dataset.act === 'rm-zone' && e.target.dataset.i !== undefined){ state.zones.splice(Number(e.target.dataset.i),1); saveAll(); updateWorldOnce(); renderAlarms(); toast('Zone removed'); }
+});
+
+/* ================== quick stopwatch controls ================== */
+document.getElementById('sw-start-quick').addEventListener('click', ()=> { state.stopwatch.running = true; state.stopwatch.start = Date.now(); saveAll(); speak('Stopwatch started'); toast('Stopwatch started'); });
+document.getElementById('sw-stop-quick').addEventListener('click', ()=> { if(state.stopwatch.running){ state.stopwatch.elapsed += Date.now() - state.stopwatch.start; state.stopwatch.running = false; saveAll(); speak('Stopwatch stopped'); toast('Stopwatch stopped'); }});
+document.getElementById('sw-reset-quick').addEventListener('click', ()=> { state.stopwatch = { running:false, start:0, elapsed:0, laps:[] }; saveAll(); toast('Stopwatch reset'); });
+
+/* ================== SpeechRecognition (single instance) ================== */
+function ensureRecognition(){
+  if(recognition) return recognition;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return null;
+  recognition = new SR();
+  recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
+  recognition.onstart = ()=>{ micBtn.classList.add('active'); aiState.textContent = 'Listening'; aiBox.textContent = 'Listening...'; };
+  recognition.onend = ()=>{ micBtn.classList.remove('active'); aiState.textContent = 'Idle'; aiBox.textContent = 'Tap the mic again to speak'; };
+  recognition.onerror = (e)=>{ console.warn('rec error', e); micBtn.classList.remove('active'); aiState.textContent = 'Error'; };
+  recognition.onresult = (e)=> {
+    const text = e.results[0][0].transcript.trim();
+    aiBox.textContent = 'Heard: ' + text;
+    handleVoice(text.toLowerCase());
+  };
+  return recognition;
+}
+
+// mic click toggles single-instance recognition (ONLY on click)
+let listening = false;
+micBtn.addEventListener('click', ()=> {
+  const rec = ensureRecognition();
+  if(!rec){ alert('SpeechRecognition unsupported. Use Chrome/Edge.'); return; }
+  try {
+    if(listening){ rec.stop(); listening = false; micBtn.classList.remove('active'); }
+    else { rec.start(); listening = true; micBtn.classList.add('active'); }
+  } catch(e){ console.warn(e); }
+});
+
+/* ================== Voice command parsing & execution ================== */
+function handleVoice(text){
+  speak('Processing command');
+  let m;
+  // set alarm
+  if(m = text.match(/set (an )?alarm (for )?(.+)/i)){
+    const when = m[3].trim();
+    const hhmm = parseTimeToHHMM(when);
+    if(hhmm){ state.alarms.push({ id: Date.now().toString(36), time: hhmm, label: 'Voice Alarm', tone: 'chime', customKey: null, triggered:false }); saveAll(); renderAlarms(); toast('Alarm set ' + hhmm); speak('Alarm set for ' + hhmm); return; }
+    speak('Could not parse the alarm time. Try: set alarm for 7 am'); return;
+  }
+
+  // delete alarm at X (supports "delete alarm at 7 am" and "delete alarm which I set at 7am")
+  if(m = text.match(/delete (an )?alarm (at|which i set at)?\s*(.+)/i)){
+    const when = m[3].trim();
+    const hhmm = parseTimeToHHMM(when);
+    if(hhmm){
+      const idx = state.alarms.findIndex(a => a.time === hhmm);
+      if(idx !== -1){ const removed = state.alarms.splice(idx,1)[0]; saveAll(); renderAlarms(); toast('Deleted alarm ' + hhmm); speak('Deleted alarm at ' + hhmm); return; }
+      speak('No alarm found at ' + hhmm); return;
+    }
+    speak('Could not parse the time to delete. Try: delete alarm at 7 am'); return;
+  }
+
+  // set timer
+  if((m = text.match(/set (a )?timer (for )?(.+)/i)) || (m = text.match(/start (a )?timer (for )?(.+)/i))){
+    const dur = m && m[3] ? m[3].trim() : null;
+    if(dur){ const sec = parseDuration(dur); if(sec>0){ startTimerFromSeconds(sec); toast('Timer started'); speak('Timer started for ' + formatDuration(sec)); return; } }
+    speak('Could not parse timer duration'); return;
+  }
+
+  // open UI
+  if(/open stopwatch|show stopwatch|start stopwatch/.test(text)){ openModal('stopwatch'); speak('Opening stopwatch'); return; }
+  if(/open world clock|show world clock|open world/.test(text)){ openModal('world'); speak('Opening world clock'); return; }
+  if(/open alarm|show alarms/.test(text)){ openModal('alarm'); speak('Opening alarms'); return; }
+
+  // change theme
+  if(m = text.match(/change theme to (\w+)/i)){
+    const theme = m[1].toLowerCase(); if(['dark','purple','red'].includes(theme)){ applyTheme(theme); speak('Theme changed to ' + theme); } else speak('Theme not available'); return;
+  }
+
+  // time ask
+  if(/what time is it|current time|tell me the time/.test(text)){ const t = niceTime(new Date(), true); speak('The time is ' + t); return; }
+
+  speak('Command not recognized. Try: set alarm for 7 am, delete alarm at 7 am, set timer for 5 minutes, or open stopwatch.');
+}
+
+/* ================== parsers ================== */
+function parseTimeToHHMM(t){
+  t = t.toLowerCase().replace(/\./g,'').trim().replace(/\btomorrow\b|\btoday\b/,'').trim();
+  let m;
+  if(m = t.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/)){ let hh = Number(m[1]); const mm = Number(m[2]); if(m[3]){ if(m[3]==='pm' && hh<12) hh+=12; if(m[3]==='am' && hh===12) hh=0; } return hh.toString().padStart(2,'0') + ':' + mm.toString().padStart(2,'0'); }
+  if(m = t.match(/(\d{1,2})\s*(am|pm)/)){ let hh = Number(m[1]); if(m[2]==='pm' && hh<12) hh+=12; if(m[2]==='am' && hh===12) hh=0; return hh.toString().padStart(2,'0') + ':00'; }
+  if(m = t.match(/(\d{1,2}):?(\d{2})$/)){ let hh = Number(m[1]); const mm = Number(m[2]); if(hh<24 && mm<60) return hh.toString().padStart(2,'0') + ':' + mm.toString().padStart(2,'0'); }
+  return null;
+}
+function parseDuration(text){
+  text = text.toLowerCase(); let sec = 0; let m;
+  if(m = text.match(/(\d+)\s*hours?/)) sec += Number(m[1]) * 3600;
+  if(m = text.match(/(\d+)\s*minutes?/)) sec += Number(m[1]) * 60;
+  if(m = text.match(/(\d+)\s*seconds?/)) sec += Number(m[1]);
+  if(sec === 0 && (m = text.match(/^(\d+)\s*m$/))) sec = Number(m[1]) * 60;
+  if(sec === 0 && (m = text.match(/^(\d+)\s*s$/))) sec = Number(m[1]);
+  if(sec === 0 && (m = text.match(/^(\d+)$/))) sec = Number(m[1]) * 60;
+  return sec;
+}
+
+/* ================== timer helper ================== */
+function startTimerFromSeconds(seconds){
+  if(state.timer && state.timer.intv) clearInterval(state.timer.intv);
+  const end = Date.now() + seconds*1000; state.timer = { end };
+  state.timer.intv = setInterval(()=> {
+    const rem = Math.ceil((end - Date.now())/1000);
+    if(rem <= 0){ clearInterval(state.timer.intv); delete state.timer; playProgramTone('bell'); toast('Timer finished'); speak('Timer finished'); openModal('timer-done'); }
+  }, 300);
+}
+
+/* ================== quick command button handler ================== */
+function handleQuick(cmd){
+  if(cmd.startsWith('timer')){ const m = cmd.split(' ')[1]; const num = parseInt(m.replace(/\D/g,'')) || 0; if(num>0){ startTimerFromSeconds(num*60); toast('Timer started'); speak('Timer started for ' + num + ' minutes'); } }
+  if(cmd.startsWith('alarm')){ const t = cmd.split(' ')[1]; if(t){ state.alarms.push({ id: Date.now().toString(36), time: t, label:'Quick Alarm', tone:'beep', customKey:null, triggered:false }); saveAll(); renderAlarms(); toast('Alarm added ' + t); speak('Alarm set for ' + t); } }
+}
+
+/* ================== helpers ================== */
+function formatMs(ms){ const s = Math.floor(ms/1000); const hh = Math.floor(s/3600).toString().padStart(2,'0'); const mm = Math.floor((s%3600)/60).toString().padStart(2,'0'); const ss = (s%60).toString().padStart(2,'0'); return `${hh}:${mm}:${ss}`; }
+function formatDuration(sec){ const h=Math.floor(sec/3600); const m=Math.floor((sec%3600)/60); const s=sec%60; return `${h} hours ${m} minutes ${s} seconds`; }
+function suggestAlarmLabel(dt=new Date()){ const h = dt.getHours(); if(h<6) return 'Early'; if(h<12) return 'Morning'; if(h<17) return 'Afternoon'; if(h<21) return 'Evening'; return 'Reminder'; }
+
+/* ================== render & init ================== */
+function renderAlarmsList(){
+  const el = document.getElementById('alarm-list'); el.innerHTML=''; if(!state.alarms.length){ el.innerHTML = '<div class="small-meta">No alarms</div>'; return; }
+  state.alarms.forEach((a,i)=>{ const node = document.createElement('div'); node.className='zone-item'; node.innerHTML = `<div><strong>${a.label||'Alarm'}</strong><div class="small-meta">${a.time} · ${a.tone||'tone'}${a.customKey?' · custom':''}${a.triggered?' · triggered':''}</div></div><div style="display:flex;gap:6px"><button class="btn" data-i="${i}" data-act="test">Test</button><button class="btn" data-i="${i}" data-act="del">Delete</button></div>`; el.appendChild(node); }); }
+renderAlarmsList();
+
+/* ensure initial UI updates */
+tickOnce(); updateWorldOnce();
+
+/* ================== load voices (async safe) ================== */
+if(speechSynthesis && speechSynthesis.getVoices().length === 0){
+  speechSynthesis.onvoiceschanged = () => { selectedVoice = pickFemaleVoice(); };
+} else selectedVoice = pickFemaleVoice();
+
+/* expose for debug if needed */
+window.neoClock = { state, saveAll, openModal, speak };
+
+/* ================== final: wire quick buttons and shortcuts ================== */
+document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => handleQuick(b.dataset.cmd)));
+document.addEventListener('keydown', (e) => { if(e.key==='a'||e.key==='A') openModal('alarm'); if(e.key==='t'||e.key==='T') openModal('timer'); if(e.key==='s'||e.key==='S') openModal('stopwatch'); if(e.key==='w'||e.key==='W') openModal('world'); });
+
+</script>
+</body>
+</html>
